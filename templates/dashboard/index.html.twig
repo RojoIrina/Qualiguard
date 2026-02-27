@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+{% block title %}QualiGuard | Decision Dashboard{% endblock %}
+{% block body %}
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body { background: #0f172a; font-family: 'Inter', sans-serif; }
+    .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+</style>
+
+<div class="min-h-screen text-slate-200">
+    <nav class="glass sticky top-0 px-8 py-4 flex justify-between items-center z-50 shadow-2xl">
+        <span class="text-2xl font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">🛡️ QUALIGUARD</span>
+        <a href="{{ path('app_logout') }}" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-power-off"></i> Déconnexion</a>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-8 grid grid-cols-12 gap-8">
+        <aside class="col-span-12 lg:col-span-4 glass rounded-[2.5rem] p-8">
+            <h2 class="text-xl font-bold mb-8 italic">Configurations</h2>
+            <form action="{{ path('app_dashboard') }}" method="GET" class="space-y-10">
+                <div class="space-y-4">
+                    <label class="text-sm text-slate-400">Dette Technique ({{ dette }}%)</label>
+                    <input type="range" name="dette" min="0" max="40" value="{{ dette }}" oninput="this.form.submit()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                </div>
+                <div class="space-y-4">
+                    <label class="text-sm text-slate-400">Couverture Tests ({{ coverage }}%)</label>
+                    <input type="range" name="coverage" min="0" max="100" value="{{ coverage }}" oninput="this.form.submit()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                </div>
+            </form>
+        </aside>
+
+        <section class="col-span-12 lg:col-span-8 space-y-8">
+            <div class="grid grid-cols-2 gap-6">
+                <div class="glass p-8 rounded-3xl">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Santé Logicielle</p>
+                    <p class="text-5xl font-black mt-2">{{ 100 - dette }}%</p>
+                </div>
+                <div class="glass p-8 rounded-3xl border-b-4 border-{{ status }}-500">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Fiabilité (ISO 25010)</p>
+                    <p class="text-5xl font-black mt-2">{{ coverage }}%</p>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-{{ status }}-600/20 to-transparent border border-{{ status }}-500/20 p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <h3 class="text-3xl font-black mb-6 uppercase text-{{ status }}-400 italic underline decoration-{{ status }}-500">{{ label }}</h3>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-500 uppercase mb-2 italic">Analyse d'Impact</h4>
+                            <p class="text-lg leading-snug">{{ impact }}</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-500 uppercase mb-2 italic">Recommandation</h4>
+                            <p class="text-lg leading-snug">{{ proposition }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
