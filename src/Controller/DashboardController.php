@@ -13,14 +13,11 @@ class DashboardController extends AbstractController
     public function login(Request $request): Response
     {
         if ($request->isMethod('POST')) {
-            $user = $request->request->get('username');
-            $pass = $request->request->get('password');
-
-            if ($user === 'admin' && $pass === 'admin') {
+            if ($request->request->get('username') === 'admin' && $request->request->get('password') === 'admin') {
                 $request->getSession()->set('auth', true);
                 return $this->redirectToRoute('app_dashboard');
             }
-            $this->addFlash('error', 'Accès refusé');
+            $this->addFlash('error', 'Identifiants invalides.');
         }
         return $this->render('dashboard/login.html.twig');
     }
@@ -28,41 +25,46 @@ class DashboardController extends AbstractController
     #[Route('/dashboard', name: 'app_dashboard')]
     public function index(Request $request): Response
     {
-        if (!$request->getSession()->get('auth')) {
-            return $this->redirectToRoute('app_login');
-        }
+        if (!$request->getSession()->get('auth')) return $this->redirectToRoute('app_login');
 
-        // Récupération des métriques (valeurs par défaut du cours)
-        $dette = (float) $request->query->get('dette', 5);
-        $coverage = (int) $request->query->get('coverage', 80);
-        $complexite = (int) $request->query->get('complexite', 12);
+        // --- 1. SAISIE (Données brutes de l'image) ---
+        $bugs       = (float) $request->query->get('bugs', 1.5);    // Code (Interne)
+        $dette      = (float) $request->query->get('dette', 4);     // Sécurité (Risque)
+        $coverage   = (int)   $request->query->get('coverage', 85);  // Robustesse
+        $leadTime   = (int)   $request->query->get('leadtime', 2);   // Process (Vitesse)
+        $nps        = (int)   $request->query->get('nps', 25);       // Usage (Externe)
 
-        // Algorithme de Diagnostic Stratégique (Niveau Master)
-        $status = 'emerald';
-        $label = "Système Sain";
-        $impact = "ROI optimal : Le code est modulaire et maintenable.";
-        $proposition = "Continuer le déploiement de nouvelles fonctionnalités.";
+        // --- 2. SORTIE (Calcul des 5 Indicateurs Clés / KPIs) ---
+        // On normalise chaque pilier sur 100 pour une lecture "Dashboard"
+        $kpiQuality      = max(0, 100 - ($bugs * 10)); 
+        $kpiSecurity     = 100 - $dette;               
+        $kpiRobustness   = $coverage;                  
+        $kpiProcess      = max(0, 100 - ($leadTime * 5)); 
+        $kpiUsage        = min(100, max(0, ($nps + 100) / 2)); 
 
-        if ($dette > 10 || $complexite > 20) {
+        // Score Global (Moyenne des 5 piliers)
+        $globalScore = ($kpiQuality + $kpiSecurity + $kpiRobustness + $kpiProcess + $kpiUsage) / 5;
+
+        // --- 3. DIAGNOSTIC STRATÉGIQUE ---
+        $status = 'emerald'; 
+        $label = "Performance Optimale";
+        $proposition = "Le système respecte les objectifs. Maintenir la vélocité.";
+
+        if ($bugs > 5 || $dette > 10 || $coverage < 70 || $leadTime > 10 || $nps < 0) {
             $status = 'red';
-            $label = "Dette Critique";
-            $impact = "Risque d'implosion : La maintenance coûte plus cher que le dev.";
-            $proposition = "Stopper le flux et lancer un sprint de refactoring (ISO 25010).";
-        } elseif ($coverage < 70) {
+            $label = "Alerte Critique";
+            $proposition = "Seuils d'alerte atteints. Priorité : Qualité et Refactoring.";
+        } elseif ($globalScore < 80) {
             $status = 'amber';
-            $label = "Fragilité Technique";
-            $impact = "Risque de régressions élevé lors des mises à jour.";
-            $proposition = "Prioriser l'écriture de tests unitaires sur les modules critiques.";
+            $label = "Vigilance Requise";
+            $proposition = "Écart constaté. Améliorer les piliers en baisse.";
         }
 
         return $this->render('dashboard/index.html.twig', [
-            'dette' => $dette,
-            'coverage' => $coverage,
-            'complexite' => $complexite,
-            'status' => $status,
-            'label' => $label,
-            'impact' => $impact,
-            'proposition' => $proposition
+            'bugs' => $bugs, 'dette' => $dette, 'coverage' => $coverage, 'leadTime' => $leadTime, 'nps' => $nps,
+            'kpiQuality' => $kpiQuality, 'kpiSecurity' => $kpiSecurity, 'kpiRobustness' => $kpiRobustness,
+            'kpiProcess' => $kpiProcess, 'kpiUsage' => $kpiUsage,
+            'globalScore' => $globalScore, 'status' => $status, 'label' => $label, 'proposition' => $proposition
         ]);
     }
 
